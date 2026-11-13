@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Vidriera · Publicaciones para tu negocio</title>
+  <meta name="description" content="Maqueta: subí fotos, contá por audio qué querés publicar y recibí el flyer, el texto y el calendario de publicaciones.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <a class="saltar" href="#contenido">Ir al contenido</a>
+
+  <header class="cabeza">
+    <div class="cabeza__in">
+      <button class="volver" id="btn-volver" type="button" hidden><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver</span></button>
+      <div class="marca" id="marca"><span class="marca__logo" aria-hidden="true"><i class="fa-solid fa-store"></i></span><span><strong>Vidriera</strong><small id="marca-negocio"></small></span></div>
+      <nav class="tabs" id="tabs" aria-label="Secciones">
+        <button type="button" data-ir="inicio"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Inicio</span></button>
+        <button type="button" data-ir="calendario"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span>Calendario</span></button>
+        <button type="button" data-ir="negocio"><i class="fa-solid fa-shop" aria-hidden="true"></i><span>Mi negocio</span></button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido" tabindex="-1">
+    <!-- ===== Inicio ===== -->
+    <section class="vista" id="v-inicio" hidden></section>
+
+    <!-- ===== Calendario ===== -->
+    <section class="vista" id="v-calendario" hidden></section>
+
+    <!-- ===== Mi negocio ===== -->
+    <section class="vista" id="v-negocio" hidden>
+      <h1>Mi negocio</h1>
+      <div class="tarjeta">
+        <label for="sel-negocio">Negocio en uso</label>
+        <div class="fila">
+          <select id="sel-negocio"></select>
+          <button class="btn" id="btn-nuevo-negocio" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> Nuevo</button>
+        </div>
+        <p class="nota">En esta demo no hay usuarios: se elige el negocio acá.</p>
+      </div>
+      <form class="tarjeta" id="form-negocio">
+        <h2>Lo que sabe el asistente</h2>
+        <p class="nota">Con estos datos escribe cada publicación. Cuanto más completo, mejor le sale.</p>
+        <label>Nombre<input name="nombre" required autocomplete="organization"></label>
+        <label>Rubro<input name="rubro" placeholder="Juguetería, panadería, biblioteca…"></label>
+        <label>¿Qué hacen o qué venden?<textarea name="descripcion" rows="3"></textarea></label>
+        <label>¿A quién le hablan?<input name="publico" placeholder="Familias del barrio, socios…"></label>
+        <label>¿Cómo habla la marca?<input name="tono"></label>
+        <div class="dos">
+          <label>WhatsApp<input name="whatsapp" inputmode="tel" autocomplete="tel"></label>
+          <label>Instagram<input name="instagram" placeholder="usuario, sin @" autocapitalize="none"></label>
+        </div>
+        <label>Dirección<input name="direccion" autocomplete="street-address"></label>
+        <label>Ciudad o zona<input name="ciudad"></label>
+        <label>Horarios<input name="horarios"></label>
+        <label>Otros datos fijos (envíos, medios de pago…)<input name="extra"></label>
+        <label>Hashtags propios<input name="hashtags" placeholder="#MiNegocio #MiCiudad" autocapitalize="none"></label>
+        <h2>Cómo se ven los flyers</h2>
+        <div class="dos">
+          <label>Color principal<input type="color" name="primario"></label>
+          <label>Color de acento<input type="color" name="acento"></label>
+        </div>
+        <label>Estilo de letra<select name="estilo"></select></label>
+        <button class="btn btn--primario btn--grande" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i> Guardar cambios</button>
+        <button class="btn btn--texto btn--peligro" type="button" id="btn-borrar-negocio">Eliminar este negocio</button>
+      </form>
+      <div class="tarjeta">
+        <h2>Logos</h2>
+        <p class="nota">Van al pie de cada imagen. Podés cargar más de uno (el del negocio, el de la institución, el de un auspiciante) y elegir cuáles usar en cada publicación. El primero es el principal.</p>
+        <div class="lista" id="lista-logos"></div>
+        <button class="btn btn--grande" type="button" id="btn-logo"><i class="fa-solid fa-image" aria-hidden="true"></i> Agregar un logo</button>
+        <input type="file" id="archivo-logo" accept="image/*" hidden>
+      </div>
+      <div class="tarjeta">
+        <h2>Fechas importantes</h2>
+        <p class="nota">Te aviso unos días antes para preparar el saludo o la publicación.</p>
+        <div class="lista" id="lista-fechas"></div>
+        <button class="btn btn--grande" type="button" data-accion="nueva-fecha"><i class="fa-solid fa-plus" aria-hidden="true"></i> Agregar una fecha</button>
+      </div>
+    </section>
+
+    <!-- ===== Crear (una publicación o un plan) ===== -->
+    <section class="vista" id="v-crear" hidden>
+      <h1 id="crear-titulo">Nueva publicación</h1>
+      <p class="bajada" id="crear-bajada"></p>
+      <div class="aviso" id="crear-aviso" role="status" hidden></div>
+
+      <div class="tarjeta">
+        <h2><span class="paso" aria-hidden="true">1</span> Fotos</h2>
+        <div class="fotos" id="fotos"></div>
+        <button class="btn btn--grande" type="button" id="btn-sumar-foto"><i class="fa-solid fa-camera" aria-hidden="true"></i> <span id="txt-sumar-foto">Agregar fotos</span></button>
+        <p class="nota" id="nota-fotos"></p>
+        <input type="file" id="archivo-fotos" accept="image/*" multiple hidden>
+      </div>
+
+      <div class="tarjeta">
+        <h2><span class="paso" aria-hidden="true">2</span> Contame</h2>
+        <p class="nota" id="crear-ayuda"></p>
+        <button class="mic" type="button" data-mic="crear"><i class="fa-solid fa-microphone" aria-hidden="true"></i><span>Tocá para hablar</span></button>
+        <label for="crear-texto">O escribilo acá</label>
+        <textarea id="crear-texto" rows="4"></textarea>
+      </div>
+
+      <div class="tarjeta" id="crear-ritmo" hidden>
+        <h2><span class="paso" aria-hidden="true">3</span> ¿Cada cuánto querés publicar?</h2>
+        <div class="opciones" id="ritmos" role="group" aria-label="Publicaciones por semana"></div>
+      </div>
+
+      <button class="btn btn--primario btn--grande pegado" type="button" id="btn-armar"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> <span id="txt-armar">Armar la publicación</span></button>
+    </section>
+
+    <!-- ===== Plan propuesto ===== -->
+    <section class="vista" id="v-plan" hidden>
+      <h1>Te propongo este plan</h1>
+      <div class="aviso aviso--ok" id="plan-mensaje"></div>
+      <div class="aviso" id="plan-sin-usar" role="status" hidden></div>
+      <div class="lista" id="plan-lista"></div>
+      <div class="tarjeta">
+        <h2>¿Querés cambiar algo?</h2>
+        <button class="mic mic--chico" type="button" data-mic="plan"><i class="fa-solid fa-microphone" aria-hidden="true"></i><span>Decímelo</span></button>
+        <label for="plan-texto">O escribilo acá</label>
+        <textarea id="plan-texto" rows="2" placeholder="Por ejemplo: pasá la promo al viernes"></textarea>
+        <button class="btn btn--grande" type="button" id="btn-replanificar">Rehacer el plan</button>
+      </div>
+      <button class="btn btn--primario btn--grande pegado" type="button" id="btn-aceptar-plan"><i class="fa-solid fa-check" aria-hidden="true"></i> Me gusta, armalo</button>
+    </section>
+
+    <!-- ===== Una publicación ===== -->
+    <section class="vista" id="v-pub" hidden>
+      <div class="pub">
+        <div class="pub__flyer">
+          <div class="aviso aviso--ok" id="pub-respuesta" role="status" hidden></div>
+          <div class="seg" id="formatos" role="group" aria-label="Formato"></div>
+          <div class="escenario" id="escenario">
+            <div class="marco" id="marco"><div id="flyer"></div></div>
+            <div class="velo" id="velo" hidden><i class="fa-solid fa-wand-magic-sparkles fa-beat-fade" aria-hidden="true"></i><span id="velo-texto">Diseñando…</span></div>
+          </div>
+          <p class="nota centro"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i> Tocá un texto de la imagen para corregirlo.</p>
+          <div class="aviso" id="avisos" hidden></div>
+          <div class="par">
+            <button class="btn btn--primario btn--grande" id="btn-descargar" type="button"><i class="fa-solid fa-download" aria-hidden="true"></i> Guardar imagen</button>
+            <button class="btn btn--grande" type="button" data-copiar="instagram"><i class="fa-regular fa-copy" aria-hidden="true"></i> Copiar texto</button>
+          </div>
+        </div>
+
+        <div class="pub__lado">
+          <div class="tarjeta" id="tarjeta-cuando">
+            <h2>¿Cuándo se publica?</h2>
+            <p class="estado" id="pub-estado"></p>
+            <div class="opciones" id="cuando-rapido"></div>
+            <label for="pub-fecha">Otro día</label>
+            <input type="date" id="pub-fecha">
+            <button class="btn btn--grande" type="button" id="btn-publicada"></button>
+          </div>
+
+          <div class="tarjeta">
+            <h2>Texto para Instagram</h2>
+            <label class="oculto" for="txt-instagram">Texto</label>
+            <textarea id="txt-instagram" rows="8"></textarea>
+            <label for="txt-hashtags">Hashtags</label>
+            <textarea id="txt-hashtags" rows="3" autocapitalize="none"></textarea>
+            <p class="nota" id="ig-cuenta"></p>
+            <details>
+              <summary>Versión para WhatsApp</summary>
+              <label class="oculto" for="txt-whatsapp">Texto para WhatsApp</label>
+              <textarea id="txt-whatsapp" rows="5"></textarea>
+              <button class="btn" type="button" data-copiar="whatsapp"><i class="fa-regular fa-copy" aria-hidden="true"></i> Copiar para WhatsApp</button>
+            </details>
+          </div>
+
+          <div class="tarjeta">
+            <h2>Pedime un cambio</h2>
+            <div class="chips" id="chips-cambio"></div>
+            <button class="mic mic--chico" type="button" data-mic="cambio"><i class="fa-solid fa-microphone" aria-hidden="true"></i><span>Decímelo</span></button>
+            <label for="cambio-texto">O escribilo acá</label>
+            <textarea id="cambio-texto" rows="2" placeholder="Por ejemplo: sumá que hay envíos"></textarea>
+            <button class="btn btn--grande" type="button" id="btn-cambio">Aplicar el cambio</button>
+          </div>
+
+          <div class="tarjeta" id="tarjeta-fondo" hidden>
+            <h2>Foto de fondo</h2>
+            <p class="nota" id="fondo-estado"></p>
+            <div class="opciones">
+              <button type="button" id="btn-fondo-otra"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Otra foto</button>
+              <button type="button" id="btn-fondo-mia"><i class="fa-solid fa-camera" aria-hidden="true"></i> Usar una mía</button>
+              <button type="button" id="btn-fondo-sin"><i class="fa-solid fa-ban" aria-hidden="true"></i> Sin foto</button>
+            </div>
+            <button class="btn btn--texto" type="button" id="btn-fondo-credito" hidden>Agregar el crédito de la foto al texto</button>
+            <input type="file" id="archivo-fondo" accept="image/*" hidden>
+          </div>
+
+          <div class="tarjeta">
+            <h2>Logos en la imagen</h2>
+            <div class="logos" id="pub-logos"></div>
+            <button class="btn" type="button" id="btn-logo-invitado"><i class="fa-solid fa-plus" aria-hidden="true"></i> Sumar el logo de un invitado</button>
+            <p class="nota">Para una publicación compartida: un auspiciante, otra institución, un funcionario.</p>
+            <input type="file" id="archivo-invitado" accept="image/*" hidden>
+          </div>
+
+          <details class="tarjeta" id="det-diseno">
+            <summary>Cambiar el diseño</summary>
+            <h3>Modelo</h3>
+            <div class="chips" id="plantillas"></div>
+            <h3>Colores</h3>
+            <div class="seg" id="esquemas" role="group" aria-label="Colores"></div>
+            <h3>Textos de la imagen</h3>
+            <div class="campos" id="campos-pieza"></div>
+            <h3>Diseño distinto</h3>
+            <p class="nota">La IA dibuja un diseño nuevo para esta publicación. Tarda cerca de un minuto.</p>
+            <button class="btn btn--grande" id="btn-diseno-ia" type="button"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Probar un diseño distinto</button>
+            <details id="det-codigo">
+              <summary>Para técnicos: ver el HTML</summary>
+              <label class="oculto" for="codigo">Código del diseño</label>
+              <textarea id="codigo" spellcheck="false" rows="10"></textarea>
+              <button class="btn" id="btn-aplicar-codigo" type="button">Aplicar cambios</button>
+            </details>
+          </details>
+
+          <button class="btn btn--texto btn--peligro" type="button" id="btn-borrar-pub"><i class="fa-solid fa-trash" aria-hidden="true"></i> Eliminar esta publicación</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Fecha importante ===== -->
+  <dialog id="dlg-fecha" aria-labelledby="dlg-fecha-titulo">
+    <form method="dialog" id="form-fecha">
+      <h2 id="dlg-fecha-titulo">Fecha importante</h2>
+      <p class="nota">Un aniversario, un feriado, el día del socio… Decímela o completala.</p>
+      <button class="mic mic--chico" type="button" data-mic="fecha"><i class="fa-solid fa-microphone" aria-hidden="true"></i><span>Decímela</span></button>
+      <label>¿Qué se festeja?<input name="nombre" required placeholder="Aniversario de la biblioteca"></label>
+      <div class="dos">
+        <label>Día<input name="dia" type="number" min="1" max="31" inputmode="numeric" required></label>
+        <label>Mes<select name="mes" required></select></label>
+      </div>
+      <label>Avisarme
+        <select name="avisar"><option value="1">1 día antes</option><option value="3" selected>3 días antes</option><option value="7">Una semana antes</option></select>
+      </label>
+      <label>Algo para tener en cuenta<input name="nota" placeholder="Cumple 60 años"></label>
+      <div class="dos">
+        <button class="btn btn--grande" type="button" id="btn-cancelar-fecha">Cancelar</button>
+        <button class="btn btn--primario btn--grande" type="submit">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="espera" id="espera" role="alert" aria-live="assertive" hidden>
+    <div><i class="fa-solid fa-wand-magic-sparkles fa-beat-fade" aria-hidden="true"></i><p id="espera-texto">Un momento…</p></div>
+  </div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/almacen.js"></script>
+  <script src="assets/js/iconos.js"></script>
+  <script src="assets/js/fechas.js"></script>
+  <script src="assets/js/negocios.js"></script>
+  <script src="assets/js/plantillas.js"></script>
+  <script src="assets/js/fotos.js"></script>
+  <script src="assets/js/render.js"></script>
+  <script src="assets/js/ia.js"></script>
+  <script src="assets/js/voz.js"></script>
+  <script src="assets/js/diseno.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

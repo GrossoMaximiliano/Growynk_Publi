@@ -1,0 +1,7 @@
+{
+  "name": "vidriera-maqueta",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Maqueta: publicaciones para comercios a partir de fotos y un audio",
+  "scripts": { "start": "node servidor.js" }
+}
