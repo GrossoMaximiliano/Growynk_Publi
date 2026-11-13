@@ -85,14 +85,15 @@ window.IA = (function () {
         "- titulo: 2 a 6 palabras, con gancho, como en un cartel. destacado: 1 a 3 palabras seguidas del título, copiadas igual, que van en otro color.",
         "- subtitulo: una oración de hasta 14 palabras; marcá con **doble asterisco** lo más importante. Puede quedar vacío.",
         "- precio, precio_antes, descuento: sólo si los dijo. cta: hasta 4 palabras (ej. \"Pedilo por WhatsApp\"); opcional.",
-        "- foto: número de la foto principal. productos (sólo para \"catalogo\"): [{\"foto\":1,\"nombre\":\"hasta 4 palabras\",\"precio\":\"\",\"detalle\":\"\"}], uno por foto, en el orden que convenga. detalle (hasta 5 palabras) sólo si agrega un dato que no está en el nombre (medida, cantidad, material, sabor); si no, vacío.",
+        "- Si subió 2 o más fotos, TODAS tienen que servir: si son productos distintos, usá \"catalogo\". Si son el mismo producto desde distintos ángulos, elegí la plantilla que corresponda (el sistema arma un carrusel con todas).",
+        "- foto: número de la foto principal. productos: OBLIGATORIO si hay 2 o más fotos, uno por CADA foto (sin saltear ninguna), sea cual sea la plantilla, porque con eso se arma el catálogo o el carrusel: [{\"foto\":1,\"nombre\":\"hasta 4 palabras\",\"precio\":\"\",\"detalle\":\"\"}]. Si dos fotos son del mismo producto, igual va una entrada por foto. detalle (hasta 5 palabras) sólo si agrega un dato que no está en el nombre (medida, cantidad, material, sabor); si no, vacío.",
         "- fondo_busqueda (sólo para \"anuncio\" y \"saludo\"): 2 a 4 palabras en español para buscar en un banco libre una foto real que vaya de fondo, desenfocada (un objeto o una escena concreta y linda, sin personas reconocibles; ej. \"árbol de navidad luces\", \"torta de chocolate\", \"estantes con libros\"). fondo_busqueda_en: lo mismo en inglés.",
         "- items (sólo para \"anuncio\", hasta 4): [{\"icono\":\"\",\"texto\":\"hasta 8 palabras\"}]. icono, uno de: " + Iconos.lista.join(", ") + "."
       ].join("\n"),
       "BORRADOR ACTUAL:\n" + borrador,
       [
         "FORMATO DE RESPUESTA: respondé SOLO un objeto JSON válido, sin texto antes ni después ni bloques de código:",
-        '{"estado":"listo"|"falta_info","mensaje":"1 o 2 oraciones para el dueño del negocio, hablándole de vos y en primera persona del singular (sos su asistente): qué armaste o qué necesitás saber","preguntas":["..."],',
+        '{"estado":"listo"|"falta_info","mensaje":"1 o 2 oraciones para el dueño del negocio, hablándole de vos y en primera persona del singular (sos su asistente): qué armaste o qué necesitás saber. Si subió varias fotos, decile qué hiciste con ellas","preguntas":["..."],',
         '"instagram":"","hashtags":["#..."],"whatsapp":"",',
         '"pieza":{"plantilla":"","etiqueta":"","titulo":"","destacado":"","subtitulo":"","precio":"","precio_antes":"","descuento":"","cta":"","foto":1,"productos":[],"items":[],"fondo_busqueda":"","fondo_busqueda_en":""}}',
         "Con estado \"falta_info\" alcanza con estado, mensaje y preguntas."
@@ -136,6 +137,9 @@ window.IA = (function () {
     p.items = (Array.isArray(p.items) ? p.items : []).filter(x => x && texto(x.texto)).slice(0, 5)
       .map(x => ({ icono: Iconos.lista.indexOf(x.icono) >= 0 ? x.icono : "check", texto: sinEmojis(texto(x.texto)) }));
     p.fondo_busqueda = sinEmojis(texto(p.fondo_busqueda)).slice(0, 60); p.fondo_busqueda_en = sinEmojis(texto(p.fondo_busqueda_en)).slice(0, 60);
+    // Varias fotos del mismo producto no son un catálogo: van de a una (la app arma el carrusel).
+    const nombres = {}; p.productos.forEach(x => { nombres[x.nombre.toLowerCase()] = 1; });
+    if (p.plantilla === "catalogo" && p.productos.length > 1 && Object.keys(nombres).length === 1) p.plantilla = p.descuento ? "oferta" : "destacado";
     p.plantilla = Plantillas.elegir(p, nFotos);
     return d;
   }

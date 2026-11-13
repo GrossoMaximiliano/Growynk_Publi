@@ -97,6 +97,9 @@
         <div class="fotos" id="fotos"></div>
         <button class="btn btn--grande" type="button" id="btn-sumar-foto"><i class="fa-solid fa-camera" aria-hidden="true"></i> <span id="txt-sumar-foto">Agregar fotos</span></button>
         <p class="nota" id="nota-fotos"></p>
+        <div class="aviso" id="tip-plan" hidden>¿Son para publicar en días distintos?
+          <button class="btn btn--grande" type="button" id="btn-tip-plan"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i> Repartirlas en varios días</button>
+        </div>
         <input type="file" id="archivo-fotos" accept="image/*" multiple hidden>
       </div>
 
@@ -137,15 +140,22 @@
       <div class="pub">
         <div class="pub__flyer">
           <div class="aviso aviso--ok" id="pub-respuesta" role="status" hidden></div>
+          <div class="aviso fuera" id="fotos-fuera" role="status" hidden></div>
+          <div class="seg" id="modos" role="group" aria-label="Cantidad de imágenes" hidden></div>
           <div class="seg" id="formatos" role="group" aria-label="Formato"></div>
           <div class="escenario" id="escenario">
             <div class="marco" id="marco"><div id="flyer"></div></div>
             <div class="velo" id="velo" hidden><i class="fa-solid fa-wand-magic-sparkles fa-beat-fade" aria-hidden="true"></i><span id="velo-texto">Diseñando…</span></div>
           </div>
+          <div class="carrusel" id="carrusel" hidden>
+            <button class="btn" type="button" id="btn-ant"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Anterior</button>
+            <span id="car-pos" aria-live="polite"></span>
+            <button class="btn" type="button" id="btn-sig">Siguiente <i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+          </div>
           <p class="nota centro"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i> Tocá un texto de la imagen para corregirlo.</p>
           <div class="aviso" id="avisos" hidden></div>
           <div class="par">
-            <button class="btn btn--primario btn--grande" id="btn-descargar" type="button"><i class="fa-solid fa-download" aria-hidden="true"></i> Guardar imagen</button>
+            <button class="btn btn--primario btn--grande" id="btn-descargar" type="button"><i class="fa-solid fa-download" aria-hidden="true"></i> <span id="txt-descargar">Guardar imagen</span></button>
             <button class="btn btn--grande" type="button" data-copiar="instagram"><i class="fa-regular fa-copy" aria-hidden="true"></i> Copiar texto</button>
           </div>
         </div>

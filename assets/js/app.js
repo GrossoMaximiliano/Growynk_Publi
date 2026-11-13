@@ -17,7 +17,7 @@
   const SIN_IA = "El asistente sólo responde si abrís la página en http://localhost:5520";
 
   // b: lo que se está cargando en "Crear" · plan: propuesta de la IA · pub: publicación abierta
-  const S = { negocios: [], neg: null, indice: [], pub: null, b: null, plan: null, vista: "inicio", tab: "inicio", ocupado: false };
+  const S = { negocios: [], neg: null, indice: [], pub: null, b: null, plan: null, vista: "inicio", tab: "inicio", ocupado: false, lamina: 0 };
 
   /* ---------------- Utilidades ---------------- */
   function toast(texto) {
@@ -278,6 +278,7 @@ ${publicadas.length ? `<details class="tarjeta"><summary>Ya publicadas (${public
 <div class="foto__dato"><label for="nota-${i}">¿Qué es la foto ${i + 1}?</label><input id="nota-${i}" data-nota="${i}" value="${esc(f.nota || "")}" placeholder="Opcional" maxlength="100"></div>
 <button type="button" class="foto__quitar" data-quitar="${i}" aria-label="Quitar la foto ${i + 1}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>`).join("");
     $("#btn-sumar-foto").hidden = b.fotos.length >= max;
+    $("#tip-plan").hidden = b.modo === "plan" || b.fotos.length < 3;
     $("#txt-sumar-foto").textContent = b.fotos.length ? "Agregar más fotos" : "Agregar fotos";
   }
   function sumarFotos(files) {
@@ -297,7 +298,10 @@ ${publicadas.length ? `<details class="tarjeta"><summary>Ya publicadas (${public
     const cambio = !p.pieza || p.pieza.plantilla !== d.pieza.plantilla;
     p.pieza = d.pieza;
     p.textos = { instagram: d.instagram, hashtags: d.hashtags, whatsapp: d.whatsapp };
-    if (cambio || !p.diseno.plantilla) { p.diseno.plantilla = d.pieza.plantilla; p.diseno.esquema = null; }
+    if (cambio || !p.diseno.plantilla) {
+      p.diseno.plantilla = d.pieza.plantilla; p.diseno.esquema = null;
+      p.diseno.carrusel = UNA_FOTO.indexOf(d.pieza.plantilla) >= 0 && puedeCarrusel(p); // varias fotos y un diseño de una sola: una imagen por foto
+    }
     p.diseno.origen = "plantilla";
     return true;
   }
@@ -325,7 +329,7 @@ ${publicadas.length ? `<details class="tarjeta"><summary>Ya publicadas (${public
     espera("Armando tu publicación…");
     IA.redactar(neg, p).then(d => {
       if (aplicar(p, d)) {
-        return fondoAuto(p).then(() => guardarPub(p)).then(() => { espera(""); S.b = null; S.pub = p; S.respuesta = d.mensaje; ir("pub"); });
+        return fondoAuto(p).then(() => guardarPub(p)).then(() => { espera(""); S.b = null; S.pub = p; S.lamina = 0; S.respuesta = d.mensaje; ir("pub"); });
       }
       espera("");
       b.pub = p; b.texto = ""; b.aviso = { mensaje: d.mensaje || "Necesito un poco más de información.", preguntas: d.preguntas };
@@ -415,7 +419,7 @@ ${it.motivo ? `<p class="nota">${esc(it.motivo)}</p>` : ""}
         p.pedido = "";
         return ir("crear");
       }
-      S.pub = p; S.respuesta = ""; ir("pub");
+      S.pub = p; S.respuesta = ""; S.lamina = 0; ir("pub");
     });
   }
 
@@ -426,6 +430,66 @@ ${it.motivo ? `<p class="nota">${esc(it.motivo)}</p>` : ""}
     const esquema = d.origen === "libre" ? "claro" : (d.esquema || t.esquema);
     return { W: f.w, H: f.h, clase: f.clase, negocio: S.neg, fotos: S.pub.fotos.map(x => x.data), vars: Negocios.variables(S.neg, esquema), esquema,
       logos: logosDe(S.pub), fondo: llevaFondo(S.pub) && S.pub.fondo ? S.pub.fondo.data : null };
+  }
+
+  /* ---------------- Carrusel y fotos que no entraron ---------------- */
+  const UNA_FOTO = ["destacado", "oferta", "novedad"];
+  const prodsDe = p => ((p.pieza && p.pieza.productos) || []).filter(x => x.foto >= 1 && x.foto <= p.fotos.length);
+  const puedeCarrusel = p => p.fotos.length >= 2 && prodsDe(p).length >= 2;
+  const enCarrusel = p => !!p.diseno.carrusel && p.diseno.origen === "plantilla" && puedeCarrusel(p);
+  // Láminas del carrusel: portada con todas (si entran en un catálogo) y una por producto.
+  function laminas(p) {
+    const id = UNA_FOTO.indexOf(p.diseno.plantilla) >= 0 ? p.diseno.plantilla : "destacado", todos = p.pieza.productos;
+    const distintos = {}; prodsDe(p).forEach(x => { distintos[x.nombre.toLowerCase()] = 1; });
+    const portada = Plantillas.apta("catalogo", p.pieza, p.fotos.length) && Object.keys(distintos).length > 1 ? [{ plantilla: "catalogo", prod: -1, pieza: Object.assign({}, p.pieza, { plantilla: "catalogo" }) }] : [];
+    return portada.concat(prodsDe(p).map(it => ({ plantilla: id, prod: todos.indexOf(it),
+      pieza: Object.assign({}, p.pieza, { plantilla: id, titulo: it.nombre, destacado: "", subtitulo: it.detalle || "", precio: it.precio || "", precio_antes: "", descuento: "", foto: it.foto }) })));
+  }
+  function fotosUsadas(p) {
+    const d = p.diseno, usadas = {};
+    if (d.origen === "libre") (d.libre.codigo.match(/FOTO(\d+)|--foto(\d+)/g) || []).forEach(m => { usadas[+m.replace(/\D/g, "")] = 1; });
+    else if (enCarrusel(p) || d.plantilla === "catalogo") prodsDe(p).forEach(x => { usadas[x.foto] = 1; });
+    else if (UNA_FOTO.indexOf(d.plantilla) >= 0) usadas[p.pieza.foto || 1] = 1;
+    return usadas;
+  }
+  function notaDe(p, n) {
+    const it = prodsDe(p).filter(x => x.foto === n)[0];
+    return p.fotos[n - 1].nota || (it ? it.nombre + (it.precio ? " a " + it.precio : "") : "");
+  }
+  function pintarFuera() {
+    const p = S.pub, caja = $("#fotos-fuera"), usadas = fotosUsadas(p), ign = p.fotosAparte || [];
+    const fuera = p.fotos.map((f, i) => i + 1).filter(n => !usadas[n] && ign.indexOf(n) < 0);
+    caja.hidden = !fuera.length;
+    if (!fuera.length) return;
+    const lista = fuera.length === 1 ? "La foto " + fuera[0] + " no está" : "Las fotos " + fuera.slice(0, -1).join(", ") + " y " + fuera[fuera.length - 1] + " no están";
+    caja.innerHTML = `<strong>${lista} en esta imagen.</strong> ¿Qué hago con ${fuera.length === 1 ? "ella" : "ellas"}?
+<div class="minis">${fuera.map(n => `<span style="background-image:url('${p.fotos[n - 1].data}')"><b>${n}</b></span>`).join("")}</div>
+<div class="opciones">${puedeCarrusel(p) ? '<button type="button" data-fuera="carrusel"><i class="fa-solid fa-images" aria-hidden="true"></i> Una imagen por foto</button>' : ""}
+${Plantillas.apta("catalogo", p.pieza, p.fotos.length) ? '<button type="button" data-fuera="catalogo"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i> Todas juntas</button>' : ""}
+<button type="button" data-fuera="plan" data-fotos="${fuera.join(",")}"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i> Publicarlas otro día</button></div>
+<button type="button" class="btn btn--texto" data-fuera="dejar" data-fotos="${fuera.join(",")}">Dejarlas afuera</button>`;
+  }
+  function pintarModo() {
+    const p = S.pub, car = enCarrusel(p), puede = puedeCarrusel(p) && p.diseno.origen === "plantilla";
+    $("#modos").hidden = !puede;
+    if (puede) $("#modos").innerHTML = `<button type="button" data-modo="una" aria-pressed="${!car}">Una imagen</button><button type="button" data-modo="carrusel" aria-pressed="${car}">Carrusel de ${laminas(p).length}</button>`;
+    $("#txt-descargar").textContent = car ? "Guardar las " + laminas(p).length + " imágenes" : "Guardar imagen";
+    const nav = $("#carrusel");
+    nav.hidden = !car;
+    if (car) {
+      const n = laminas(p).length;
+      $("#car-pos").textContent = (S.lamina + 1) + " de " + n;
+      $("#btn-ant").disabled = S.lamina <= 0; $("#btn-sig").disabled = S.lamina >= n - 1;
+    }
+  }
+  // Las fotos que no entraron se llevan a un plan nuevo, con lo que se sabe de cada una.
+  function planificarAparte(nums) {
+    const p = S.pub;
+    p.fotosAparte = (p.fotosAparte || []).concat(nums); guardarPub(p);
+    S.plan = null;
+    S.b = { modo: "plan", fotos: nums.map(n => ({ data: p.fotos[n - 1].data, nota: notaDe(p, n) })), texto: "", porSemana: 3, chat: [], pub: null, fecha: null, clave: null, titulo: "",
+      aviso: { mensaje: "Te traje las fotos que no entraron en la publicación. Revisá qué es cada una, elegí cada cuánto publicar y tocá «Armar el plan»." } };
+    ir("crear");
   }
 
   /* ---------------- Logos de la publicación ---------------- */
@@ -487,10 +551,10 @@ ${it.motivo ? `<p class="nota">${esc(it.motivo)}</p>` : ""}
     fl.style.width = x.W + "px"; fl.style.height = x.H + "px"; fl.style.transform = "scale(" + k + ")";
   }
   function pintarBarras() {
-    const p = S.pub, d = p.diseno, n = p.fotos.length;
+    const p = S.pub, d = p.diseno, n = p.fotos.length, car = enCarrusel(p);
     $("#plantillas").innerHTML = Plantillas.lista.map(t => {
-      const ok = Plantillas.apta(t.id, p.pieza, n);
-      return `<button type="button" data-plantilla="${t.id}" aria-pressed="${d.origen === "plantilla" && d.plantilla === t.id}" ${ok ? "" : "disabled"} title="${esc(ok ? t.desc : "Necesita más fotos")}"><i class="fa-solid ${t.icono}" aria-hidden="true"></i>${t.nombre}</button>`;
+      const ok = Plantillas.apta(t.id, p.pieza, n), activa = car ? (UNA_FOTO.indexOf(d.plantilla) >= 0 ? d.plantilla : "destacado") === t.id : d.plantilla === t.id;
+      return `<button type="button" data-plantilla="${t.id}" aria-pressed="${d.origen === "plantilla" && activa}" ${ok ? "" : "disabled"} title="${esc(ok ? t.desc : "Necesita más fotos")}"><i class="fa-solid ${t.icono}" aria-hidden="true"></i>${t.nombre}</button>`;
     }).join("") + (d.libre ? `<button type="button" data-plantilla="libre" aria-pressed="${d.origen === "libre"}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>Diseño de la IA</button>` : "");
     $("#formatos").innerHTML = Object.keys(C.formatos).map(k => `<button type="button" data-formato="${k}" aria-pressed="${d.formato === k}">${C.formatos[k].nombre}</button>`).join("");
     pintarFondo();
@@ -503,16 +567,21 @@ ${it.motivo ? `<p class="nota">${esc(it.motivo)}</p>` : ""}
     if (!p || !p.pieza || S.vista !== "pub") return Promise.resolve();
     const d = p.diseno, mio = ++turno;
     if (d.origen === "plantilla" && !Plantillas.apta(d.plantilla, p.pieza, p.fotos.length)) d.plantilla = Plantillas.elegir(Object.assign({}, p.pieza, { plantilla: d.plantilla }), p.fotos.length);
-    const x = contexto();
-    pintarBarras(); escalar();
-    const cod = d.origen === "libre" && d.libre ? d.libre.codigo : Plantillas.codigo(d.plantilla, p.pieza, x);
+    const x = contexto(), ls = enCarrusel(p) ? laminas(p) : null;
+    S.lamina = ls ? Math.max(0, Math.min(S.lamina, ls.length - 1)) : 0;
+    const lam = ls ? ls[S.lamina] : null;
+    pintarBarras(); pintarModo(); pintarFuera(); escalar();
+    const cod = d.origen === "libre" && d.libre ? d.libre.codigo : Plantillas.codigo(lam ? lam.plantilla : d.plantilla, lam ? lam.pieza : p.pieza, x);
     if (document.activeElement !== $("#codigo")) $("#codigo").value = cod;
     return Iconos.listo.then(() => Render.montar($("#flyer"), cod, x, {
       editable: true,
       alEditar: el => {
         if (mio !== turno || !el || d.origen !== "plantilla") return;
         const campo = el.getAttribute("data-c"); if (!campo) return;
-        ponerCampo(p.pieza, campo, el.innerText.replace(/\s+/g, " ").trim());
+        const valor = el.innerText.replace(/\s+/g, " ").trim(), prod = lam && lam.prod >= 0 ? p.pieza.productos[lam.prod] : null;
+        const delProd = { titulo: "nombre", subtitulo: "detalle", precio: "precio" }[campo];
+        if (prod && delProd) { prod[delProd] = valor; guardarAbierta(); return; } // en una lámina de producto, el texto es de ese producto
+        ponerCampo(p.pieza, campo, valor);
         if (campo === "titulo") { const m = el.querySelector("mark"); p.pieza.destacado = m ? m.innerText.trim() : ""; }
         pintarCampos(true); guardarAbierta();
       },
@@ -586,6 +655,7 @@ ${it.motivo ? `<p class="nota">${esc(it.motivo)}</p>` : ""}
     const p = S.pub, d = p.diseno;
     if (S.ocupado || !p.pieza) return;
     if (!IA.activa()) return toast(SIN_IA);
+    if (enCarrusel(p)) return toast("El diseño distinto es para una sola imagen. Pasá a «Una imagen» y probá de nuevo.");
     S.ocupado = true;
     $("#velo").hidden = false; $("#velo-texto").textContent = "Diseñando…";
     $("#escenario").scrollIntoView({ block: "center" });
@@ -604,18 +674,27 @@ ${it.motivo ? `<p class="nota">${esc(it.motivo)}</p>` : ""}
     }).catch(e => toast("No se pudo hacer el diseño (" + e.message + ").")).then(() => { S.ocupado = false; $("#velo").hidden = true; });
   }
 
+  // Guarda la imagen; en un carrusel, una por lámina (numeradas, para subirlas en orden).
   function descargar() {
-    const x = contexto(), b = $("#btn-descargar");
+    const p = S.pub, b = $("#btn-descargar"), car = enCarrusel(p), total = car ? laminas(p).length : 1, antes = S.lamina;
+    const base = slug(S.neg.nombre) + "-" + slug(p.pieza.titulo) + "-" + (p.tipo === "historia" ? "historia" : "post");
     b.disabled = true;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    Render.exportar($("#flyer"), x).then(canvas => new Promise(ok => canvas.toBlob(ok, "image/png"))).then(blob => {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = slug(S.neg.nombre) + "-" + slug(S.pub.pieza.titulo) + "-" + (S.pub.tipo === "historia" ? "historia" : "post") + ".png";
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      toast("Imagen guardada en tus descargas.");
-    }).catch(e => toast(e.message || "No se pudo guardar la imagen.")).then(() => { b.disabled = false; });
+    if (car) espera("Guardando las " + total + " imágenes…");
+    const una = i => (car ? (S.lamina = i, pintarFlyer()) : Promise.resolve())
+      .then(() => Render.exportar($("#flyer"), contexto())).then(canvas => new Promise(ok => canvas.toBlob(ok, "image/png"))).then(blob => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = base + (car ? "-" + (i + 1) : "") + ".png";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 8000);
+        return new Promise(ok => setTimeout(ok, 450)); // algunos navegadores frenan descargas muy seguidas
+      });
+    let cola = Promise.resolve();
+    for (let i = 0; i < total; i++) cola = cola.then(() => una(i));
+    cola.then(() => toast(car ? "Se guardaron " + total + " imágenes. En Instagram, elegilas juntas en orden para armar el carrusel." : "Imagen guardada en tus descargas."))
+      .catch(e => toast(e.message || "No se pudo guardar la imagen."))
+      .then(() => { espera(""); b.disabled = false; if (car) { S.lamina = antes; pintarFlyer(); } });
   }
 
   /* ---------------- Eventos ---------------- */
@@ -698,6 +777,7 @@ ${it.motivo ? `<p class="nota">${esc(it.motivo)}</p>` : ""}
     // Crear
     $("#btn-sumar-foto").addEventListener("click", () => $("#archivo-fotos").click());
     $("#archivo-fotos").addEventListener("change", e => { sumarFotos(e.target.files); e.target.value = ""; });
+    $("#btn-tip-plan").addEventListener("click", () => { S.b.modo = "plan"; pintarCrear(); toast("Ahora las reparto en varios días. Contame qué es cada foto."); });
     $("#fotos").addEventListener("click", e => { const q = e.target.closest("[data-quitar]"); if (q) { S.b.fotos.splice(+q.dataset.quitar, 1); pintarFotos(); } });
     $("#fotos").addEventListener("input", e => { const n = e.target.dataset.nota; if (n != null) S.b.fotos[+n].nota = e.target.value.trim(); });
     $("#crear-texto").addEventListener("input", e => { if (S.b) S.b.texto = e.target.value; });
@@ -727,11 +807,32 @@ ${it.motivo ? `<p class="nota">${esc(it.motivo)}</p>` : ""}
       const b = e.target.closest("[data-plantilla]"); if (!b || b.disabled) return;
       const p = S.pub, d = p.diseno, id = b.dataset.plantilla;
       if (id === "libre") { d.formato = d.libre.formato; p.tipo = d.formato === "9:16" ? "historia" : "post"; d.origen = "libre"; }
-      else { d.origen = "plantilla"; if (d.plantilla !== id) d.esquema = null; d.plantilla = id; p.pieza.plantilla = id; }
+      else {
+        d.origen = "plantilla"; if (d.plantilla !== id) d.esquema = null; d.plantilla = id; p.pieza.plantilla = id;
+        if (UNA_FOTO.indexOf(id) < 0) d.carrusel = false; // catálogo, aviso y saludo son de una sola imagen
+      }
       $("#avisos").hidden = true; pintarFlyer(); pintarCampos(true); guardarAbierta();
     });
     $("#esquemas").addEventListener("click", e => { const b = e.target.closest("[data-esquema]"); if (b && !b.disabled) { S.pub.diseno.esquema = b.dataset.esquema; pintarFlyer(); guardarAbierta(); } });
     $("#btn-diseno-ia").addEventListener("click", disenarConIA);
+
+    // Carrusel y fotos que no entraron
+    $("#modos").addEventListener("click", e => {
+      const b = e.target.closest("[data-modo]"); if (!b) return;
+      S.pub.diseno.carrusel = b.dataset.modo === "carrusel"; S.lamina = 0;
+      pintarFlyer(); guardarAbierta();
+    });
+    $("#btn-ant").addEventListener("click", () => { if (S.lamina > 0) { S.lamina--; pintarFlyer(); } });
+    $("#btn-sig").addEventListener("click", () => { S.lamina++; pintarFlyer(); });
+    $("#fotos-fuera").addEventListener("click", e => {
+      const b = e.target.closest("[data-fuera]"); if (!b) return;
+      const p = S.pub, d = p.diseno, que = b.dataset.fuera, nums = (b.dataset.fotos || "").split(",").filter(Boolean).map(Number);
+      if (que === "carrusel") { d.carrusel = true; d.origen = "plantilla"; if (UNA_FOTO.indexOf(d.plantilla) < 0) d.plantilla = "destacado"; S.lamina = 0; toast("Listo: una imagen por foto. Pasalas con las flechas."); }
+      else if (que === "catalogo") { d.carrusel = false; d.origen = "plantilla"; d.plantilla = "catalogo"; d.esquema = null; p.pieza.plantilla = "catalogo"; toast("Listo: todas juntas en una imagen."); }
+      else if (que === "plan") return planificarAparte(nums);
+      else if (que === "dejar") p.fotosAparte = (p.fotosAparte || []).concat(nums);
+      pintarFlyer(); pintarCampos(); guardarAbierta();
+    });
 
     // Logos y foto de fondo
     $("#pub-logos").addEventListener("click", e => {

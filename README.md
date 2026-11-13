@@ -28,6 +28,10 @@ tarea por pantalla, tres secciones (Inicio, Calendario, Mi negocio) y siempre la
 
 1. **Crear una publicación**: fotos (opcionales) + un audio o texto. Devuelve la imagen, el texto de Instagram,
    los hashtags y una versión para WhatsApp. Si no entiende qué promocionar, pregunta.
+   Con varias fotos ninguna queda afuera sin aviso: productos distintos van en un catálogo o en un **carrusel**
+   (portada + una imagen por producto), varias fotos del mismo producto van en carrusel, y si alguna foto no entra
+   la pantalla lo dice y ofrece sumarla, armar un carrusel o **publicarla otro día** (pasa a "Planificar varias"
+   con lo que ya se sabe de cada foto). En el carrusel, "Guardar" baja todas las imágenes numeradas.
 2. **Planificar varias**: se suben hasta 12 fotos juntas, se cuenta qué es cada una y cada cuánto se quiere
    publicar. El asistente propone un plan como haría un community manager: qué fotos van juntas, qué día, si es
    post o historia y por qué. Se puede cambiar el día, quitar publicaciones o pedir cambios hablando. Al aceptar,

@@ -64,6 +64,13 @@ main { max-width: 1080px; margin: 0 auto; padding: 16px; }
 .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .par { display: grid; gap: 0 10px; }
 .pub__flyer .aviso { margin: 0; }
+.fuera .opciones { margin-top: 6px; }
+.fuera .opciones button { background: var(--blanco); }
+.fuera .btn--texto { margin-top: 4px; padding-left: 0; }
+#modos { display: grid; grid-template-columns: 1fr 1fr; }
+.carrusel { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.carrusel span { font-weight: 700; }
+#tip-plan { margin: 10px 0 0; }
 
 /* Grupos de opciones (una elegida): segmentos y chips */
 .seg, .opciones, .chips { display: flex; flex-wrap: wrap; gap: 8px; }
